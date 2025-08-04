@@ -13,6 +13,7 @@ import {
   Req,
   HttpException,
   Query,
+  Body,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MediaService } from './media.service';
@@ -21,6 +22,10 @@ import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/local-auth/guards/jwt.guard';
 
 import { MediaFilePipe } from './media-file.pipe';
+import { MediaPageDto } from 'src/pagination/media/media-page.dto';
+import { PageDto } from 'src/pagination/page.dto';
+import { Media } from './entities/media.entity';
+import { CreateMediaDto } from './dto/create-media.dto';
 
 @ApiTags('media')
 @Controller('media')
@@ -33,8 +38,12 @@ export class MediaController {
   async uploadFile(
     @UploadedFile(new MediaFilePipe())
     file: Express.Multer.File,
+    @Body() createMediaDto: CreateMediaDto,
   ) {
-    const savedFilePath = await this.mediaService.saveFile(file);
+    const savedFilePath = await this.mediaService.saveFile(
+      file,
+      createMediaDto,
+    );
     return { filePath: savedFilePath };
   }
 
@@ -68,5 +77,12 @@ export class MediaController {
     const { id: id_user } = request.user.user;
 
     return this.mediaService.remove(+id, id_user);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Get('')
+  findAll(@Query() mediaPageOptionsDto: MediaPageDto): Promise<PageDto<Media>> {
+    return this.mediaService.findAll(mediaPageOptionsDto);
   }
 }

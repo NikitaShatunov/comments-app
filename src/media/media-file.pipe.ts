@@ -8,7 +8,7 @@ import * as sharp from 'sharp';
 
 const MAX_IMAGE_WIDTH = 320;
 const MAX_IMAGE_HEIGHT = 240;
-const MAX_TXT_SIZE = 100 * 1024; // 100 KB
+
 export const MAX_PROFILE_PICTURE_SIZE_IN_BYTES = 16 * 1024 * 1024; // 16MB
 export const VALID_IMAGE_MIME_TYPES = [
   'image/jpeg',
@@ -40,13 +40,6 @@ export class MediaFilePipe implements PipeTransform {
           .toBuffer();
         file.buffer = resizedBuffer;
         file.size = resizedBuffer.length;
-      }
-      return file;
-    }
-
-    if (file.mimetype === VALID_TXT_MIME_TYPE) {
-      if (file.size > MAX_TXT_SIZE) {
-        throw new BadRequestException('TXT file too large');
       }
       return file;
     }

@@ -1,11 +1,20 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateMediaDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(50)
   name: string;
 
+  @IsString()
   @IsOptional()
-  @IsBoolean()
-  is_public: boolean;
+  @MaxLength(250)
+  description?: string;
 }

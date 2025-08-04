@@ -7,8 +7,11 @@ export class Media extends AbstractEntityClass<Media> {
   @Column({ nullable: false })
   name: string;
 
+  @Column({ nullable: true })
+  description: string;
+
   @Column({ nullable: false, default: true })
-  is_public: boolean;
+  isPublic: boolean;
 
   @ManyToOne(() => Portfolio, (portfolio) => portfolio.images, {
     onDelete: 'CASCADE',

@@ -18,20 +18,10 @@ import { PortfolioPageDto } from 'src/pagination/portfolios/portfolio-page.dto';
 import { PageDto } from 'src/pagination/page.dto';
 import { PageMetaDto } from 'src/pagination/page-meta.dto';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { selectPortfolio } from 'src/common/selects/select-portfolio';
 
 @Injectable()
 export class PortfoliosService {
-  private readonly selectProfile = {
-    id: true,
-    title: true,
-    description: true,
-    createdAt: true,
-    user: {
-      id: true,
-      name: true,
-      email: true,
-    },
-  };
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @InjectRepository(Portfolio)
@@ -66,7 +56,7 @@ export class PortfoliosService {
   ): Promise<PageDto<Portfolio>> {
     const { search, page, order, take } = profilePageOptionsDto;
 
-    const cacheKey = `portfolio_page_${page}_take_${take}_${order}`;
+    const cacheKey = `portfolio_page_${page}_take_${take}_${order}_search_${search}`;
     // Check if the data is already cached
     const cached = await this.cacheManager.get<PageDto<Portfolio>>(cacheKey);
     if (cached) {
@@ -85,8 +75,8 @@ export class PortfoliosService {
 
     const [entities, itemCount] = await this.portfolioRepository.findAndCount({
       where: searchCondition.length ? searchCondition : { isPublic: true },
-      relations: ['user'],
-      select: this.selectProfile,
+      relations: { user: true },
+      select: selectPortfolio,
       order: { createdAt: order },
       skip,
       take,
