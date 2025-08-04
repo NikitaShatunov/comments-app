@@ -6,6 +6,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { LocalAuthModule } from './local-auth/local-auth.module';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { PortfoliosModule } from './portfolios/portfolios.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -28,7 +29,7 @@ async function bootstrap() {
     )
     .build();
   const document = SwaggerModule.createDocument(app, config, {
-    include: [UsersModule, LocalAuthModule],
+    include: [UsersModule, LocalAuthModule, PortfoliosModule],
   });
   SwaggerModule.setup('api', app, document);
 

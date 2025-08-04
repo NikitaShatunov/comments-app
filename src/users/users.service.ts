@@ -21,7 +21,7 @@ import { UserCreatedEvent } from './events/user-created.events';
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    private readonly eventEmitter: EventEmitter2,
+    // private readonly eventEmitter: EventEmitter2,
   ) {}
   async create(createUserDto: CreateUserDto) {
     await isUniquePropertyValue(
@@ -44,7 +44,7 @@ export class UsersService {
       email: user.email,
       name: user.name,
     };
-    this.eventEmitter.emit('user.created', userCreatedEvent);
+    // this.eventEmitter.emit('user.created', userCreatedEvent);
     return result;
   }
 
