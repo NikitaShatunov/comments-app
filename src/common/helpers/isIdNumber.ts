@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus } from "@nestjs/common";
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 /**
  * Checks if a given id is a number.
@@ -8,7 +8,10 @@ import { HttpException, HttpStatus } from "@nestjs/common";
  */
 function isIdNumber(id: any, name: string) {
   if (!id) {
-    throw new HttpException(`Id of the ${name} must be a number.`, HttpStatus.BAD_REQUEST);
+    throw new HttpException(
+      `Id of the ${name} must be a number.`,
+      HttpStatus.BAD_REQUEST,
+    );
   }
 }
 export { isIdNumber };

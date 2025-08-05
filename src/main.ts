@@ -1,23 +1,20 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as bodyParser from 'body-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { LocalAuthModule } from './local-auth/local-auth.module';
-import { ThrottlerGuard } from '@nestjs/throttler';
 import { PortfoliosModule } from './portfolios/portfolios.module';
 import { MediaModule } from './media/media.module';
 import { CommentsModule } from './comments/comments.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  // app.use(cookieParser());
 
   const config = new DocumentBuilder()
     .setTitle('API for Lanars')
     .setDescription('API documentation for the Lanars test application')
-    .setVersion('1.1')
+    .setVersion('1.2')
     .addBearerAuth(
       {
         type: 'http',
@@ -41,7 +38,6 @@ async function bootstrap() {
   });
   SwaggerModule.setup('api', app, document);
 
-  app.use(bodyParser.json());
   app.useGlobalPipes(new ValidationPipe());
   app.enableCors();
 
