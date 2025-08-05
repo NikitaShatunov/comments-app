@@ -58,4 +58,14 @@ export class PortfoliosController {
     const { id: userId } = req?.user?.user;
     return this.portfoliosService.remove(+id, userId);
   }
+
+  @Post(':id/image/:imageId')
+  addImage(
+    @Param('id') id: string,
+    @Param('imageId') imageId: string,
+    @Req() req: any,
+  ) {
+    const { id: userId } = req?.user?.user;
+    return this.portfoliosService.addImage(+id, +imageId, userId);
+  }
 }

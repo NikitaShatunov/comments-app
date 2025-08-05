@@ -124,7 +124,10 @@ export class MediaService {
 
   async findOne(id: number, id_user?: number) {
     isIdNumber(id, 'media');
-    const media = await this.mediaRepository.findOne({ where: { id } });
+    const media = await this.mediaRepository.findOne({
+      where: { id },
+      relations: { portfolio: { user: true } },
+    });
     validateGetById(id, media, 'media');
     return media;
   }

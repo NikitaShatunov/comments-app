@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   HttpStatus,
   Inject,
@@ -35,7 +36,7 @@ export class PortfoliosService {
     const images: Media[] = [];
     if (imagesIds && imagesIds.length) {
       for (const imageId of imagesIds) {
-        const image = await this.mediaService.findOne(imageId);
+        const image = await this.validateImageNotInPortfolio(imageId);
         images.push(image);
       }
     }
@@ -93,11 +94,17 @@ export class PortfoliosService {
     return result;
   }
 
-  async findOne(id: number) {
+  /**
+   * Finds one portfolio by id.
+   * @param id Id of the portfolio.
+   * @param isService If true, loads images relation.
+   * @returns The found portfolio.
+   */
+  async findOne(id: number, isService: boolean = false) {
     isIdNumber(id, 'portfolio');
     const portfolio = await this.portfolioRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: { user: true, images: isService },
     });
     validateGetById(id, portfolio, 'portfolio');
     return portfolio;
@@ -109,11 +116,8 @@ export class PortfoliosService {
     userId: number,
   ) {
     const portfolio = await this.findOne(id);
-    if (portfolio.user?.id !== userId) {
-      throw new ForbiddenException(
-        'You do not have permission to update this portfolio',
-      );
-    }
+    this.ensureUserOwnsPortfolio(portfolio, userId);
+
     portfolio.title = updatePortfolioDto.title ?? portfolio.title;
     portfolio.description =
       updatePortfolioDto.description ?? portfolio.description;
@@ -123,11 +127,8 @@ export class PortfoliosService {
 
   async remove(id: number, userId: number) {
     const portfolio = await this.findOne(id);
-    if (userId && portfolio.user?.id !== userId) {
-      throw new ForbiddenException(
-        'You do not have permission to delete this portfolio',
-      );
-    }
+    this.ensureUserOwnsPortfolio(portfolio, userId);
+
     await this.portfolioRepository.remove(portfolio);
 
     // Clear cache after deleting a portfolio
@@ -137,5 +138,51 @@ export class PortfoliosService {
       message: `Portfolio with id: ${id} was deleted successfully`,
       status: HttpStatus.OK,
     };
+  }
+
+  async addImage(id: number, imageId: number, userId: number) {
+    const portfolio = await this.findOne(id, true);
+    this.ensureUserOwnsPortfolio(portfolio, userId);
+
+    const image = await this.validateImageNotInPortfolio(imageId);
+
+    portfolio.images.push(image);
+    await this.portfolioRepository.save(portfolio);
+    return {
+      message: `Image with id: ${imageId} was added to portfolio with id: ${id}`,
+      status: HttpStatus.OK,
+    };
+  }
+
+  //=========================================ERROR HANDLERS==========================================
+
+  /**
+   * Validates that a media image is not already assigned to a portfolio.
+   * Throws BadRequestException if it is.
+   * @param imageId - The ID of the image to validate.
+   * @returns The Media entity if the image is not in a portfolio.
+   */
+  private async validateImageNotInPortfolio(imageId: number): Promise<Media> {
+    const image = await this.mediaService.findOne(imageId);
+    if (image.portfolio) {
+      throw new BadRequestException(
+        `Image with id: ${imageId} is already added to another portfolio`,
+      );
+    }
+    return image;
+  }
+
+  /**
+   * Ensures the user has access to modify the given portfolio.
+   * @param portfolio - The portfolio to check.
+   * @param userId - The ID of the user trying to modify the portfolio.
+   * Throws ForbiddenException if not allowed.
+   */
+  private ensureUserOwnsPortfolio(portfolio: Portfolio, userId: number): void {
+    if (portfolio.user?.id !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this portfolio',
+      );
+    }
   }
 }
