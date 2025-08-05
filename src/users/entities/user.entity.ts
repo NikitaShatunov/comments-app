@@ -1,5 +1,4 @@
 import { AbstractEntityClass } from 'src/database/AbstractEntityClass';
-import { OtpCode } from 'src/otp-code/entities/otp-code.entity';
 import { Portfolio } from 'src/portfolios/entities/portfolio.entity';
 import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
 
@@ -13,9 +12,6 @@ export class User extends AbstractEntityClass<User> {
 
   @Column()
   password: string;
-
-  @OneToOne(() => OtpCode, (otp) => otp.user)
-  otp: OtpCode;
 
   @Column({ default: true })
   isVerified: boolean;
