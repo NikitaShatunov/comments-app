@@ -9,7 +9,7 @@ import { CreatePortfolioDto } from './dto/create-portfolio.dto';
 import { UpdatePortfolioDto } from './dto/update-portfolio.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Portfolio } from './entities/portfolio.entity';
-import { FindOptionsWhere, Like, Repository } from 'typeorm';
+import { FindOptionsWhere, Like, Not, Repository } from 'typeorm';
 import { UsersService } from 'src/users/users.service';
 import { Media } from 'src/media/entities/media.entity';
 import { MediaService } from 'src/media/media.service';
@@ -54,6 +54,7 @@ export class PortfoliosService {
 
   async findAll(
     profilePageOptionsDto: PortfolioPageDto,
+    userId: number,
   ): Promise<PageDto<Portfolio>> {
     const { search, page, order, take } = profilePageOptionsDto;
 
@@ -66,16 +67,35 @@ export class PortfoliosService {
     const skip = (page - 1) * take;
     const searchCondition: FindOptionsWhere<Portfolio>[] = [];
     if (search) {
+      //we prevent the user from searching for their own portfolio
       searchCondition.push(
-        { title: Like(`%${search}%`), isPublic: true },
-        { description: Like(`%${search}%`), isPublic: true },
-        { user: { name: Like(`%${search}%`) }, isPublic: true },
-        { user: { email: Like(`%${search}%`) }, isPublic: true },
+        {
+          title: Like(`%${search}%`),
+          isPublic: true,
+          user: { id: Not(userId) },
+        },
+        {
+          description: Like(`%${search}%`),
+          isPublic: true,
+          user: { id: Not(userId) },
+        },
+        {
+          user: { name: Like(`%${search}%`) },
+          isPublic: true,
+          id: Not(userId),
+        },
+        {
+          user: { email: Like(`%${search}%`) },
+          isPublic: true,
+          id: Not(userId),
+        },
       );
     }
 
     const [entities, itemCount] = await this.portfolioRepository.findAndCount({
-      where: searchCondition.length ? searchCondition : { isPublic: true },
+      where: searchCondition.length
+        ? searchCondition
+        : { isPublic: true, user: { id: Not(userId) } },
       relations: { user: true },
       select: selectPortfolio,
       order: { createdAt: order },
@@ -92,6 +112,16 @@ export class PortfoliosService {
     await this.cacheManager.set(cacheKey, result);
 
     return result;
+  }
+
+  async findAllOwnPortfolios(userId: number) {
+    const portfolios = await this.portfolioRepository.find({
+      where: { user: { id: userId } },
+      relations: { user: true },
+      select: selectPortfolio,
+      order: { createdAt: 'DESC' },
+    });
+    return portfolios;
   }
 
   /**

@@ -1,6 +1,6 @@
 import * as argon2 from 'argon2';
 
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { isIdNumber } from 'src/common/helpers/isIdNumber';
@@ -16,6 +16,7 @@ import {
 } from 'unique-names-generator';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserCreatedEvent } from './events/user-created.events';
+import { selectUser } from 'src/common/selects/select-user';
 
 @Injectable()
 export class UsersService {
@@ -61,8 +62,17 @@ export class UsersService {
 
   async findOne(id: number) {
     isIdNumber(id, 'User');
-    const user = await this.userRepository.findOne({ where: { id } });
+    const user = await this.userRepository.findOne({
+      where: { id },
+      select: selectUser,
+    });
     validateGetById(id, user, 'User');
     return user;
+  }
+
+  async remove(userId: number) {
+    const user = await this.findOne(userId);
+    await this.userRepository.remove(user);
+    return { message: 'User deleted successfully', status: HttpStatus.OK };
   }
 }

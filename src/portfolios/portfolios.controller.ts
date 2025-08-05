@@ -34,8 +34,16 @@ export class PortfoliosController {
   @Get()
   findAll(
     @Query() profilePageOptionsDto: PortfolioPageDto,
+    @Req() req: any,
   ): Promise<PageDto<Portfolio>> {
-    return this.portfoliosService.findAll(profilePageOptionsDto);
+    const { id: userId } = req?.user?.user;
+    return this.portfoliosService.findAll(profilePageOptionsDto, userId);
+  }
+
+  @Get('own/me')
+  findAllOwnPortfolios(@Req() req: any) {
+    const { id: userId } = req?.user?.user;
+    return this.portfoliosService.findAllOwnPortfolios(userId);
   }
 
   @Get(':id')
