@@ -1,20 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PageOptionsDto } from '../page-options.dto';
-import { IsEnum, IsOptional } from 'class-validator';
-
-enum SortBy {
-  CREATED_AT = 'comment.createdAt',
-  USER_NAME = 'user.name',
-  EMAIL = 'user.email',
-}
+import { IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CommentPageDto extends PageOptionsDto {
   @ApiProperty({
-    enum: SortBy,
-    required: false,
-    description: 'Field to sort by',
+    example: 1,
+    required: true,
+    description: 'Image ID to filter by',
   })
-  @IsEnum(SortBy)
-  @IsOptional()
-  sortBy?: SortBy;
+  @IsNumber()
+  @Type(() => Number)
+  imageId: number;
 }

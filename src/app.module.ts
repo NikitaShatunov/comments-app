@@ -5,6 +5,7 @@ import { PortfoliosModule } from './portfolios/portfolios.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { UsersModule } from './users/users.module';
 import { LocalAuthModule } from './local-auth/local-auth.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { LocalAuthModule } from './local-auth/local-auth.module';
       isGlobal: true,
       store: 'memory',
     }),
+    CommentsModule,
   ],
 })
 export class AppModule {}

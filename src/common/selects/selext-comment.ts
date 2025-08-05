@@ -1,9 +1,9 @@
 import { selectUser } from './select-user';
 
-export const selectPortfolio = {
+export const selectComment = {
   id: true,
-  title: true,
-  description: true,
+  text: true,
+  childrenCount: true,
   createdAt: true,
   user: selectUser,
 };
