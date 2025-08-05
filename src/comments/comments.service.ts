@@ -15,7 +15,7 @@ import { PageDto } from 'src/pagination/page.dto';
 import { PageMetaDto } from 'src/pagination/page-meta.dto';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { MediaService } from 'src/media/media.service';
-import { selectComment } from 'src/common/selects/selext-comment';
+import { selectComment } from 'src/common/selects/select-comment';
 
 @Injectable()
 export class CommentsService {
@@ -71,7 +71,7 @@ export class CommentsService {
     }
 
     const [comments, itemCount] = await this.commentRepository.findAndCount({
-      where: { media: { id: imageId } },
+      where: { media: { id: imageId, isPublic: true } },
       relations: { user: true },
       select: selectComment,
       order: { createdAt: order },
@@ -99,7 +99,8 @@ export class CommentsService {
       return cached;
     }
     const [children, itemCount] = await this.commentRepository.findAndCount({
-      where: { parent: { id: parentId } },
+      //we need to show only public comments
+      where: { parent: { id: parentId, media: { isPublic: true } } },
       relations: { user: true },
       select: selectComment,
       skip,
@@ -120,8 +121,8 @@ export class CommentsService {
 
   async findOne(id: number, userId?: number): Promise<Comment> {
     const comment = await this.commentRepository.findOne({
-      where: { id },
-      relations: ['user', 'media', 'parent'],
+      //user can reply only to public comments
+      where: { id, media: { isPublic: true } },
     });
     validateGetById(id, comment, 'Comment');
 
