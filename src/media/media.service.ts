@@ -5,6 +5,7 @@ import {
   HttpStatus,
   HttpException,
   Inject,
+  ForbiddenException,
 } from '@nestjs/common';
 import { join } from 'path';
 import { promises as fs } from 'fs';
@@ -129,6 +130,8 @@ export class MediaService {
       relations: { portfolio: { user: true } },
     });
     validateGetById(id, media, 'media');
+    if (id_user && media.portfolio.user.id !== id_user)
+      throw new ForbiddenException('You are not the owner of this media');
     return media;
   }
 
