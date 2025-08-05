@@ -21,6 +21,8 @@ import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { PageMetaDto } from 'src/pagination/page-meta.dto';
 import { selectMedia } from 'src/common/selects/select-media';
 import { CreateMediaDto } from './dto/create-media.dto';
+import { UpdateMediaDto } from './dto/update-media.dto';
+import { isDefined } from 'class-validator';
 
 @Injectable()
 export class MediaService {
@@ -123,16 +125,26 @@ export class MediaService {
     }
   }
 
-  async findOne(id: number, id_user?: number) {
+  async findOne(id: number, userId?: number) {
     isIdNumber(id, 'media');
     const media = await this.mediaRepository.findOne({
       where: { id },
       relations: { portfolio: { user: true } },
+      select: selectMedia,
     });
     validateGetById(id, media, 'media');
-    if (id_user && media.portfolio.user.id !== id_user)
+    if (userId && media.portfolio.user.id !== userId)
       throw new ForbiddenException('You are not the owner of this media');
     return media;
+  }
+
+  async update(id: number, updateMediaDto: UpdateMediaDto, userId: number) {
+    const { name, description, isPublic } = updateMediaDto;
+    const media = await this.findOne(id, userId);
+    media.name = name ?? media.name;
+    media.description = description ?? media.description;
+    media.isPublic = isDefined(isPublic) ? isPublic : media.isPublic;
+    return await this.mediaRepository.save(media);
   }
 
   // @OnEvent('comment.deleted')
@@ -143,8 +155,8 @@ export class MediaService {
   //   await this.remove(media.id);
   // }
 
-  async remove(id: number, id_user?: number) {
-    const media = await this.findOne(id, id_user);
+  async remove(id: number, userId?: number) {
+    const media = await this.findOne(id, userId);
     return await this.deleteMediaFile(media.path, id);
   }
 

@@ -134,6 +134,7 @@ export class PortfoliosService {
     isIdNumber(id, 'portfolio');
     const portfolio = await this.portfolioRepository.findOne({
       where: { id },
+      select: selectPortfolio,
       relations: { user: true, images: isService },
     });
     validateGetById(id, portfolio, 'portfolio');

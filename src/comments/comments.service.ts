@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   HttpStatus,
   Inject,
@@ -133,9 +134,8 @@ export class CommentsService {
 
   async findOne(id: number, userId?: number): Promise<Comment> {
     const comment = await this.commentRepository.findOne({
-      //user can reply only to public comments
-      where: { id, media: { isPublic: true } },
-      relations: { parent: true },
+      where: { id },
+      relations: { parent: true, user: true },
     });
     validateGetById(id, comment, 'Comment');
 

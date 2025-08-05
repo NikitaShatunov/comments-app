@@ -14,6 +14,7 @@ import {
   HttpException,
   Query,
   Body,
+  Patch,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MediaService } from './media.service';
@@ -26,6 +27,7 @@ import { MediaPageDto } from 'src/pagination/media/media-page.dto';
 import { PageDto } from 'src/pagination/page.dto';
 import { Media } from './entities/media.entity';
 import { CreateMediaDto } from './dto/create-media.dto';
+import { UpdateMediaDto } from './dto/update-media.dto';
 
 @ApiTags('media')
 @Controller('media')
@@ -84,5 +86,17 @@ export class MediaController {
   @Get('')
   findAll(@Query() mediaPageOptionsDto: MediaPageDto): Promise<PageDto<Media>> {
     return this.mediaService.findAll(mediaPageOptionsDto);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id')
+  update(
+    @Body() updateMediaDto: UpdateMediaDto,
+    @Req() req,
+    @Param('id') id: string,
+  ) {
+    const { id: userId } = req.user.user;
+    return this.mediaService.update(+id, updateMediaDto, userId);
   }
 }
