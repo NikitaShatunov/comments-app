@@ -16,6 +16,9 @@ import { PageMetaDto } from 'src/pagination/page-meta.dto';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { MediaService } from 'src/media/media.service';
 import { selectComment } from 'src/common/selects/select-comment';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CommentCreatedEvent } from './events/comment-created.event';
+import { CommentDeletedEvent } from './events/comment-deleted.event';
 
 @Injectable()
 export class CommentsService {
@@ -25,6 +28,7 @@ export class CommentsService {
     private readonly commentRepository: Repository<Comment>,
     private readonly userService: UsersService,
     private readonly mediaService: MediaService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async create(createCommentDto: CreateCommentDto, userId: number) {
@@ -52,6 +56,14 @@ export class CommentsService {
       );
     }
     await this.cacheManager.clear();
+
+    // Emit the event after the comment is created used for logging or other side effects(email notifications, etc.)
+    const commentCreatedEvent: CommentCreatedEvent = {
+      id: savedComment.id,
+      userId: user.id,
+      parentCommentId: savedComment.parent?.id,
+    };
+    this.eventEmitter.emit('comment.created', savedComment);
 
     return { message: 'Comment created successfully', status: HttpStatus.OK };
   }
@@ -123,6 +135,7 @@ export class CommentsService {
     const comment = await this.commentRepository.findOne({
       //user can reply only to public comments
       where: { id, media: { isPublic: true } },
+      relations: { parent: true },
     });
     validateGetById(id, comment, 'Comment');
 
@@ -140,7 +153,20 @@ export class CommentsService {
   async remove(id: number, userId: number) {
     const comment = await this.findOne(id, userId);
     await this.commentRepository.delete(id);
+    if (comment.parent) {
+      await this.commentRepository.decrement(
+        { id: comment.parent.id },
+        'childrenCount',
+        1,
+      );
+    }
+
     await this.cacheManager.clear();
+
+    const commentDeletedEvent: CommentDeletedEvent = {
+      id,
+    };
+    this.eventEmitter.emit('comment.deleted', commentDeletedEvent);
 
     return { message: 'Comment deleted successfully', status: HttpStatus.OK };
   }
