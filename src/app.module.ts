@@ -6,6 +6,8 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { UsersModule } from './users/users.module';
 import { LocalAuthModule } from './local-auth/local-auth.module';
 import { CommentsModule } from './comments/comments.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { LogsRecordsModule } from './logs-records/logs-records.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { CommentsModule } from './comments/comments.module';
       store: 'memory',
     }),
     CommentsModule,
+    EventEmitterModule.forRoot({}),
+    LogsRecordsModule,
   ],
 })
 export class AppModule {}
