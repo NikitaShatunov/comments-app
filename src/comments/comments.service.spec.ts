@@ -126,7 +126,7 @@ describe('CommentsService', () => {
         mockComment,
       );
       expect(result).toEqual({
-        message: 'Comment created successfully',
+        message: `Comment with id ${mockComment.id} created successfully`,
         status: HttpStatus.OK,
       });
     });
@@ -138,7 +138,10 @@ describe('CommentsService', () => {
       } as CreateCommentDto;
       const userId = 1;
       const mockUser = { id: userId };
-      const mockParentComment = { id: createDto.parentCommentId };
+      const mockParentComment = {
+        id: createDto.parentCommentId,
+        user: mockUser,
+      };
       const mockComment = {
         id: 2,
         text: createDto.text,
@@ -154,16 +157,18 @@ describe('CommentsService', () => {
       const result = await service.create(createDto, userId);
 
       expect(commentRepository.findOne).toHaveBeenCalledWith({
-        where: { id: createDto.parentCommentId, media: { isPublic: true } },
-        relations: { parent: true },
+        where: { id: createDto.parentCommentId },
+        relations: { parent: true, user: true },
       });
+
       expect(commentRepository.increment).toHaveBeenCalledWith(
         { id: mockParentComment.id },
         'childrenCount',
         1,
       );
+
       expect(result).toEqual({
-        message: 'Comment created successfully',
+        message: `Comment with id ${mockComment.id} created successfully`,
         status: HttpStatus.OK,
       });
     });
@@ -192,7 +197,7 @@ describe('CommentsService', () => {
 
       expect(mediaService.findOne).toHaveBeenCalledWith(createDto.imageId);
       expect(result).toEqual({
-        message: 'Comment created successfully',
+        message: `Comment with id ${mockComment.id} created successfully`,
         status: HttpStatus.OK,
       });
     });
@@ -307,16 +312,21 @@ describe('CommentsService', () => {
   describe('findOne', () => {
     it('should return a comment', async () => {
       const commentId = 1;
-      const mockComment = { id: commentId, text: 'Test comment' };
+      const mockComment = {
+        id: commentId,
+        text: 'Test comment',
+        user: { id: 1 },
+      };
 
       mockCommentRepository.findOne.mockResolvedValue(mockComment);
 
       const result = await service.findOne(commentId);
 
       expect(commentRepository.findOne).toHaveBeenCalledWith({
-        where: { id: commentId, media: { isPublic: true } },
-        relations: { parent: true },
+        where: { id: commentId },
+        relations: { parent: true, user: true },
       });
+
       expect(result).toEqual(mockComment);
     });
 
@@ -346,7 +356,7 @@ describe('CommentsService', () => {
   });
 
   describe('remove', () => {
-    it('should delete a comment and decrement parent count', async () => {
+    it('should delete a comment and decrement parent count when comment has parent', async () => {
       const commentId = 1;
       const userId = 1;
       const parentId = 2;
@@ -356,7 +366,7 @@ describe('CommentsService', () => {
         parent: { id: parentId },
       };
 
-      // Mock findOne to properly handle the where clause
+      // Mock findOne to verify ownership
       mockCommentRepository.findOne.mockImplementation(async (options) => {
         if (options.where.id === commentId) {
           return mockComment;
@@ -370,8 +380,8 @@ describe('CommentsService', () => {
       const result = await service.remove(commentId, userId);
 
       expect(commentRepository.findOne).toHaveBeenCalledWith({
-        where: { id: commentId, media: { isPublic: true } },
-        relations: { parent: true },
+        where: { id: commentId },
+        relations: { parent: true, user: true },
       });
       expect(commentRepository.delete).toHaveBeenCalledWith(commentId);
       expect(commentRepository.decrement).toHaveBeenCalledWith(
@@ -383,6 +393,30 @@ describe('CommentsService', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('comment.deleted', {
         id: commentId,
       });
+      expect(result).toEqual({
+        message: 'Comment deleted successfully',
+        status: HttpStatus.OK,
+      });
+    });
+
+    it('should delete a comment without decrementing when no parent exists', async () => {
+      const commentId = 1;
+      const userId = 1;
+      const mockComment = {
+        id: commentId,
+        user: { id: userId },
+        parent: null,
+      };
+
+      mockCommentRepository.findOne.mockResolvedValue(mockComment);
+      mockUsersService.findOne.mockResolvedValue({ id: userId });
+      mockCommentRepository.delete.mockResolvedValue({ affected: 1 });
+
+      const result = await service.remove(commentId, userId);
+
+      expect(commentRepository.findOne).toHaveBeenCalled();
+      expect(commentRepository.delete).toHaveBeenCalledWith(commentId);
+      expect(commentRepository.decrement).not.toHaveBeenCalled();
       expect(result).toEqual({
         message: 'Comment deleted successfully',
         status: HttpStatus.OK,

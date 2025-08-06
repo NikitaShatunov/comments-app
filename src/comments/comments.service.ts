@@ -66,7 +66,10 @@ export class CommentsService {
     };
     this.eventEmitter.emit('comment.created', savedComment);
 
-    return { message: 'Comment created successfully', status: HttpStatus.OK };
+    return {
+      message: `Comment with id ${savedComment.id} created successfully`,
+      status: HttpStatus.OK,
+    };
   }
 
   // Main method for root comments

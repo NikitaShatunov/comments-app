@@ -147,14 +147,6 @@ export class MediaService {
     return await this.mediaRepository.save(media);
   }
 
-  // @OnEvent('comment.deleted')
-  // async handleCommentDeletedEvent(event: CommentDeletedEvent) {
-  //   const { fileId } = event;
-  //   if (!fileId) return;
-  //   const media = await this.findOne(fileId);
-  //   await this.remove(media.id);
-  // }
-
   async remove(id: number, userId?: number) {
     const media = await this.findOne(id, userId);
     return await this.deleteMediaFile(media.path, id);

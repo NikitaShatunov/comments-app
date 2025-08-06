@@ -265,7 +265,17 @@ describe('PortfoliosService', () => {
   describe('findOne', () => {
     it('should return a portfolio', async () => {
       const portfolioId = 1;
-      const mockPortfolio = { id: portfolioId };
+      const mockPortfolio = {
+        id: portfolioId,
+        title: 'Test Portfolio',
+        description: 'Test Description',
+        createdAt: new Date(),
+        user: {
+          id: 1,
+          name: 'Test User',
+          email: 'test@example.com',
+        },
+      };
 
       mockPortfolioRepository.findOne.mockResolvedValue(mockPortfolio);
 
@@ -274,6 +284,7 @@ describe('PortfoliosService', () => {
       expect(portfolioRepository.findOne).toHaveBeenCalledWith({
         where: { id: portfolioId },
         relations: { user: true, images: false },
+        select: expect.any(Object), // Match any select object
       });
       expect(result).toEqual(mockPortfolio);
     });

@@ -267,7 +267,23 @@ describe('MediaService', () => {
   describe('findOne', () => {
     it('should return media by id', async () => {
       const mediaId = 1;
-      const mockMedia = { id: mediaId };
+      const mockMedia = {
+        id: mediaId,
+        createdAt: new Date(),
+        description: 'test',
+        name: 'test.jpg',
+        portfolio: {
+          id: 1,
+          title: 'Test Portfolio',
+          description: 'Test',
+          createdAt: new Date(),
+          user: {
+            id: 1,
+            name: 'Test User',
+            email: 'test@example.com',
+          },
+        },
+      };
 
       mockMediaRepository.findOne.mockResolvedValue(mockMedia);
 
@@ -276,6 +292,7 @@ describe('MediaService', () => {
       expect(mediaRepository.findOne).toHaveBeenCalledWith({
         where: { id: mediaId },
         relations: { portfolio: { user: true } },
+        select: expect.any(Object),
       });
       expect(result).toEqual(mockMedia);
     });
@@ -286,7 +303,20 @@ describe('MediaService', () => {
       const otherUserId = 2;
       const mockMedia = {
         id: mediaId,
-        portfolio: { user: { id: userId } },
+        createdAt: new Date(),
+        description: 'test',
+        name: 'test.jpg',
+        portfolio: {
+          id: 1,
+          title: 'Test Portfolio',
+          description: 'Test',
+          createdAt: new Date(),
+          user: {
+            id: userId,
+            name: 'Test User',
+            email: 'test@example.com',
+          },
+        },
       };
 
       mockMediaRepository.findOne.mockResolvedValue(mockMedia);
