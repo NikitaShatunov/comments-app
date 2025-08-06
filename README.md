@@ -1,98 +1,188 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Portfolio REST API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This is a test project for LANARS - building a RESTful API for a portfolio platform. The application allows users to register, create portfolios with images, interact through comments, and explore other users' portfolios. It is built using **NestJS**, **MySQL**, and various best practices to ensure scalability, performance, and maintainability.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features Implemented
 
-## Description
+- **User Authentication**
+  - Local registration & login
+  - JWT token issuance
+  - Profile deletion
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Portfolios**
+  - Each user can create multiple portfolios
+  - Each portfolio has a name, description, and a set of images
+  - Portfolios are listed and accessible by creation date
+  - Users can delete individual images from their portfolios
 
-## Project setup
+- **Images**
+  - Each image has a name and description
+  - Images support uploading, updating, and deletion
+  - Pagination is implemented for image feeds and portfolio views
+  - Image validation includes:
+    - Maximum file size
+    - Allowed MIME types
+    - Dimension limits (width & height)
+
+- **Comments**
+  - Comments can be added to images
+  - Supports root comments and nested replies (child comments)
+  - Replies are fetched via a separate query for performance optimization
+  - `childrenCount` field is stored for each comment to help frontend rendering
+
+- **Validation & Error Handling**
+  - All incoming requests are validated via DTOs and class-validator
+  - Global error handling for HTTP errors: 400, 401, 403, 404
+  - Swagger examples provided for every DTO body
+
+- **Caching**
+  - Selective caching is used to reduce database load and speed up read operations
+
+- **Events**
+  - `EventEmitterModule` is used to emit and subscribe to system events
+  - Logging is implemented for comment creation events (extensible for notifications)
+
+- **Pagination**
+  - Implemented on all modules with flexible query parameters
+
+- **Testing**
+  - Unit tests are provided for all service layers
+
+---
+
+## Architectural Decisions
+
+### 1. **Modular Architecture**
+
+Each domain is implemented as a separate NestJS module, improving maintainability and scalability.
+
+### 2. **Abstract Base Entity**
+
+A reusable base entity was created for all models to include shared fields:
+
+- `id`
+- `created_at`
+- `updated_at`
+
+This reduces boilerplate code and ensures consistency across entities.
+
+### 3. **DTO + Swagger Integration**
+
+Using DTOs with `@ApiProperty` decorators allowed for generating clear Swagger documentation. It enhances developer experience and speeds up testing and debugging.
+
+### 4. **Image Handling via Custom Pipe**
+
+A custom pipe was implemented to:
+
+- Validate file type and dimensions
+- Limit upload size
+  This guarantees that only appropriate images are processed, ensuring security and storage efficiency.
+
+### 5. **Separation of Concerns in Image & Portfolio Queries**
+
+Images are fetched via a separate endpoint from portfolios. This makes lazy loading via pagination easier in large-scale production environments.
+
+### 6. **Nested Comments Handling**
+
+Root and child comments are fetched with different endpoints. This:
+
+- Improves performance when there are many comments
+- Supports threaded replies cleanly
+- Enables displaying comment hierarchy on the frontend without overfetching
+
+### 7. **Caching & Optimization**
+
+Caching mechanisms (e.g., in-memory or Redis, configurable) reduce redundant database queries for high-traffic endpoints like image feed.
+
+### 8. **EventEmitter for Extensibility**
+
+Using events decouples logic, making it easy to extend features later, such as:
+
+- Email notifications when someone replies to a comment (in future)
+- Activity logs
+- Real-time updates
+
+---
+
+## Technology Stack
+
+- **Backend Framework**: NestJS
+- **Database**: MySQL
+- **ORM**: TypeORM
+- **Validation**: class-validator, DTOs
+- **Authentication**: Passport.js with JWT strategy
+- **Documentation**: Swagger (OpenAPI)
+- **Caching**: In-memory (configurable for Redis)
+- **Testing**: Jest
+- **Event Handling**: @nestjs/event-emitter
+- **File Upload**: Multer + Custom validation pipes
+
+---
+
+## Potential Future Enhancements
+
+- **WebSocket Integration**  
+  Implement WebSocket (e.g., using `@nestjs/websockets`) to allow real-time updates — particularly for:
+  - New comments and replies
+  - Live feed updates
+  - Real-time notification counters
+
+- **Comment Subscriptions**  
+  Allow users to subscribe to image threads or comment chains to receive instant updates when replies are posted.
+
+- **Email Provider Integration**  
+  Connect an email service (e.g., SendGrid, AWS SES) for:
+  - Notifications about replies or activity
+  - Email verification via one-time password (OTP)
+  - Password reset functionality
+  - Transactional messaging
+
+## Getting Started
+
+### Installation
+
+1. **Clone the repository**
 
 ```bash
-$ npm install
+git init
+git remote add origin https://github.com/NikitaShatunov/lanars_test.git
+git pull origin main
 ```
 
-## Compile and run the project
+2. **Install all dependencies**
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+3. **Create `.env` file**
+
+Copy the example environment configuration:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+cp .env.example .env
 ```
 
-## Deployment
+Then open `.env` and replace the placeholder values with your actual configuration.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+4. **Build the project**
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run build
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+5. **Run the application**
 
-## Resources
+```bash
+npm run start
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+6. **Access API documentation**
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+After launching the application, open your browser and go to:
 
-## Support
+```
+http://localhost:3000/api
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This will open the **Swagger UI**, which includes all available endpoints, example request bodies, and detailed response formats.
